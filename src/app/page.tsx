@@ -5,7 +5,7 @@ import { useState } from 'react';
 export default function Home() {
   const [prompt, setPrompt] = useState('');
   const [songIds, setSongIds] = useState<string[]>([]);
-  const [tracks, setTracks] = useState<any[]>([]);
+  const [tracks, setTracks] = useState<any[] | undefined>([]);
 
   const handleGeminiPrompt = async (prompt: string) => {
     console.log('fetching data : ', prompt);
@@ -30,7 +30,7 @@ export default function Home() {
       const response = await fetch(`/api/spotify-songs?songs=${songIds.join('|')}`);
       const data = await response.json();
       console.log('tracks! : ', data);
-      setTracks(data.tracks.items);
+      setTracks(data.tracks);
     } catch (error) {
       console.error('error : ', error);
     }
@@ -67,14 +67,15 @@ export default function Home() {
       </button>
 
       <div>
-        {tracks.map((track, index) => (
-          <div key={index} className="flex flex-col gap-1">
-            <p>{track.name}</p>
-            <p>{track.artists[0].name}</p>
-            <p>{track.album.release_date}</p>
-            <img src={track.album.images[0].url} alt={track.name} />
-          </div>
-        ))}
+        {tracks &&
+          tracks.map((track, index) => (
+            <div key={index} className="flex flex-col gap-1">
+              <p>{track.name}</p>
+              <p>{track.artists[0].name}</p>
+              <p>{track.album.release_date}</p>
+              <img src={track.album.images[0].url} alt={track.name} />
+            </div>
+          ))}
       </div>
     </main>
   );

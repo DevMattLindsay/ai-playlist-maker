@@ -24,23 +24,42 @@ export async function GET(request: NextRequest) {
 
     const songsArr = songs.split('|');
 
-    const apiResponse = await fetch(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(songsArr[0])}&type=track&limit=1`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${process.env.SPOTIFY_ACCESS_TOKEN}`,
-        },
-      }
-    );
+    let searchPromises = [];
+    let tracks: any[] = [];
 
-    if (!apiResponse.ok) {
-      throw new Error(`Error fetching tracks: ${apiResponse.statusText}`);
+    for (let song of songsArr) {
+      searchPromises.push(
+        fetch(
+          `https://api.spotify.com/v1/search?q=${encodeURIComponent(song)}&type=track&limit=1`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${process.env.SPOTIFY_ACCESS_TOKEN}`,
+            },
+          }
+        )
+      );
     }
 
-    const apiResponseData = await apiResponse.json();
+    await Promise.all(searchPromises)
+      .then(async (responses) => {
+        const reponseData: any[] = [];
 
-    return new Response(JSON.stringify(apiResponseData), {
+        responses.forEach((response) => {
+          reponseData.push(response.json());
+        });
+
+        return Promise.all(reponseData);
+      })
+      .then((data) => {
+        console.log('data : ', data);
+        tracks = data;
+      })
+      .catch((error) => {
+        throw new Error('Error fetching tracks: ', error);
+      });
+
+    return new Response(JSON.stringify({ tracks: tracks.map((t) => t.tracks.items[0]) }), {
       status: 200,
       headers: { 'Content-Type': 'object/json' },
     });
