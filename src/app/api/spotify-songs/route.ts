@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
 
     if (
       !process.env.SPOTIFY_ACCESS_TOKEN ||
-      (process.env.SPOTIFY_ACCESS_TOKEN_EXPIRY && process.env.SPOTIFY_ACCESS_TOKEN_EXPIRY > now)
+      (process.env.SPOTIFY_ACCESS_TOKEN_EXPIRY && process.env.SPOTIFY_ACCESS_TOKEN_EXPIRY < now)
     ) {
       console.log('fetching new access token');
       const accessTokenResponse = await fetch(process.env.BASE_URL + `/api/spotify-access-token`, {
