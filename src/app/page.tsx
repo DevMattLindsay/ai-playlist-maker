@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { PromptInput } from '@/components';
 
 export default function Home() {
   const [prompt, setPrompt] = useState('');
@@ -14,9 +15,9 @@ export default function Home() {
       const response = await fetch(`/api/gemini-prompt?prompt=${prompt}`);
       const data = await response.json();
 
-      console.log('data.song_ids : ', data.song_ids);
+      console.log('data.songIds : ', data.songIds);
 
-      setSongIds(data.song_ids);
+      setSongIds(data.songIds);
     } catch (error) {
       console.error('error : ', error);
     }
@@ -36,21 +37,44 @@ export default function Home() {
     }
   };
 
+  const handleClick = async () => {
+    try {
+      const geminiResponse = await fetch(`/api/gemini-prompt?prompt=${prompt}`);
+      const geminiData = await geminiResponse.json();
+      console.log('geminiData : ', geminiData);
+      setSongIds(geminiData.songIds);
+      const spotifyResponse = await fetch(
+        `/api/spotify-songs?songs=${geminiData.songIds.join('|')}`
+      );
+      const spotifyData = await spotifyResponse.json();
+      console.log('spotifyData : ', spotifyData);
+      setTracks(spotifyData.tracks);
+    } catch (error) {
+      console.error('error : ', error);
+    }
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center gap-4 p-24">
-      <p>What playlist?</p>
+      <h1 className="text-xl text-slate-200">What playlist would you like to generate?</h1>
+      <PromptInput prompt={prompt} onPromptChange={(prompt) => setPrompt(prompt)} />
 
-      <input
-        className="w-[400px] text-2xl text-black"
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-      />
-
-      <button
+      {/* <button
         className="bg-blue-500 text-white p-2 rounded-lg"
         onClick={() => handleGeminiPrompt(prompt)}
       >
         Gemini Prompt
+      </button>
+
+      <button
+        className="bg-green-500 text-white p-2 rounded-lg"
+        onClick={() => handleSpotifySongs(songIds)}
+      >
+        Spotify Songs
+      </button> */}
+
+      <button className="bg-purple-700 text-white p-2 rounded-sm" onClick={handleClick}>
+        Prompt
       </button>
 
       <div className="flex flex-col gap-1">
@@ -58,13 +82,6 @@ export default function Home() {
           <p key={index}>{item}</p>
         ))}
       </div>
-
-      <button
-        className="bg-green-500 text-white p-2 rounded-lg"
-        onClick={() => handleSpotifySongs(songIds)}
-      >
-        Spotify Songs
-      </button>
 
       <div>
         {tracks &&
