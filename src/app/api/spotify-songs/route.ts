@@ -52,7 +52,6 @@ export async function GET(request: NextRequest) {
         return Promise.all(reponseData);
       })
       .then((data) => {
-        console.log('data : ', data);
         tracks = data;
       })
       .catch((error) => {

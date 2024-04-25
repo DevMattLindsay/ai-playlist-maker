@@ -13,9 +13,9 @@ export async function GET(request: NextRequest) {
     // string prompt
     const promptPrefix =
       'Can you generate a music playlist of 5 songs. ' +
-      'I want to song name, artist name and release year for each song in a string seperated by |. ' +
+      'I want to song name and artist name for each song in a string seperated by |. ' +
       'Do not include any other information, do not number the songs. response should look like this should look like this: ' +
-      'track:SONG_NAME artist:ARTIST_NAME year:RELEASE_YEAR|track:SONG_NAME artist:ARTIST_NAME year:RELEASE_YEAR|track:SONG_NAME artist:ARTIST_NAME year:RELEASE_YEAR' +
+      'track:SONG_NAME artist:ARTIST_NAME|track:SONG_NAME artist:ARTIST_NAME|track:SONG_NAME artist:ARTIST_NAME' +
       'Can you please use the following prompt to generate this : ';
 
     const googleai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);

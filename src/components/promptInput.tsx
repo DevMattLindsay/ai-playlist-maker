@@ -1,6 +1,5 @@
 'use client';
 
-import { set } from 'date-fns';
 import { useState, useEffect } from 'react';
 
 type PromptInputT = {
@@ -71,6 +70,7 @@ export default function PromptInput({ prompt, onPromptChange }: PromptInputT) {
         value={prompt}
         onChange={(e) => e.target.value.length <= MAXIMUM && onPromptChange(e.target.value)}
         placeholder={placeholder}
+        autoFocus
       />
       <span className="mt-2 text-slate-300">
         {prompt.length} / {MAXIMUM}
