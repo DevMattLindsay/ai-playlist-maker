@@ -12,8 +12,9 @@ export async function GET(request: NextRequest) {
 
     // string prompt
     const promptPrefix =
-      'Can you generate a music playlist of 5 songs. ' +
+      'Can you generate a music playlist of 10 songs. ' +
       'I want to song name and artist name for each song in a string seperated by |. ' +
+      'These need to be real songs. ' +
       'Do not include any other information, do not number the songs. response should look like this should look like this: ' +
       'track:SONG_NAME artist:ARTIST_NAME|track:SONG_NAME artist:ARTIST_NAME|track:SONG_NAME artist:ARTIST_NAME' +
       'Can you please use the following prompt to generate this : ';

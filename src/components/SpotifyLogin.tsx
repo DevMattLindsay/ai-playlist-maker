@@ -13,7 +13,7 @@ export default function SpotifyLogin() {
       href={`https://accounts.spotify.com/authorize?${queryString.stringify({
         response_type: 'code',
         client_id: process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID,
-        scope: 'user-read-private user-read-email playlist-modify-public',
+        scope: 'user-read-private user-read-email playlist-modify-private playlist-modify-public',
         redirect_uri: 'http://localhost:3000/',
         state: random,
       })}`}
