@@ -40,21 +40,25 @@ export async function GET(request: NextRequest) {
       cache: 'no-store',
     });
 
-    const response = await apiResponse.json();
+    const responseData = await apiResponse.json();
+
+    if (responseData.error) {
+      throw new Error(responseData.error_description);
+    }
 
     const currentTime = new Date();
-    const expiryTime = addSeconds(currentTime, response.expires_in);
+    const expiryTime = addSeconds(currentTime, responseData.expires_in);
     const expiryTimeFormatted = format(expiryTime, 'yyyy-MM-dd HH:mm:ss');
 
     if (!isUser) {
-      process.env.SPOTIFY_ACCESS_TOKEN = response.access_token;
+      process.env.SPOTIFY_ACCESS_TOKEN = responseData.access_token;
       process.env.SPOTIFY_ACCESS_TOKEN_EXPIRY = expiryTimeFormatted;
     }
 
-    console.log('response.access_token : ', response.access_token);
+    console.log('responseData.access_token : ', responseData.access_token);
 
     return new Response(
-      JSON.stringify({ accessToken: response.access_token, expiryTime: expiryTimeFormatted }),
+      JSON.stringify({ accessToken: responseData.access_token, expiryTime: expiryTimeFormatted }),
       {
         status: 200,
         headers: { 'Content-Type': 'object/json' },

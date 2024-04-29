@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { PromptInput, SpotifyLogin } from '@/components';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   fetchSpotifyUser,
   fetchSpotifyCreatePlaylist,
   fetchSpotifyAddItemsToPlaylist,
+  fetchSpotifyUserAccessToken,
 } from '@/services';
 import {
   LOCAL_STORAGE_AUTH_CODE,
@@ -17,15 +18,21 @@ import {
 export default function Home() {
   const searchParams = useSearchParams();
   const code = searchParams.get('code');
+  const router = useRouter();
 
   const [prompt, setPrompt] = useState('');
   const [songIds, setSongIds] = useState<string[]>([]);
   const [tracks, setTracks] = useState<SpotifyApi.TrackObjectFull[] | undefined>([]);
 
   useEffect(() => {
+    const getAccessToken = async () => {
+      await fetchSpotifyUserAccessToken();
+    };
+
     if (code) {
-      console.log('init code : ', code);
       localStorage.setItem(LOCAL_STORAGE_AUTH_CODE, code);
+      router.replace('/');
+      getAccessToken();
     }
   }, []);
 
@@ -41,32 +48,6 @@ export default function Home() {
       const spotifyData = await spotifyResponse.json();
       console.log('spotifyData : ', spotifyData);
       setTracks(spotifyData.tracks);
-    } catch (error) {
-      console.error('error : ', error);
-    }
-  };
-
-  const handleClickAccessToken = async () => {
-    try {
-      const authCode = localStorage.getItem(LOCAL_STORAGE_AUTH_CODE);
-
-      if (!authCode) {
-        console.error('No auth code found');
-        return;
-      }
-
-      const response = await fetch(
-        `/api/spotify-access-token?userCode=${encodeURIComponent(authCode)}`,
-        {
-          cache: 'no-store',
-        }
-      );
-      const data = await response.json();
-
-      // TODO maybe moving to Zustand store is better
-      localStorage.setItem(LOCAL_STORAGE_ACCESS_CODE, data.accessToken);
-      localStorage.setItem(LOCAL_STORAGE_ACCESS_CODE_EXPIRY, data.expiresIn);
-      console.log('data : ', data);
     } catch (error) {
       console.error('error : ', error);
     }
@@ -97,10 +78,6 @@ export default function Home() {
       </button>
 
       <SpotifyLogin />
-
-      <button className="bg-orange-700 p-2 rounded-sm" onClick={handleClickAccessToken}>
-        Get Access Token
-      </button>
 
       <button className="bg-pink-700 p-2 rounded-sm" onClick={handleClickPlaylist}>
         Create Playlist
