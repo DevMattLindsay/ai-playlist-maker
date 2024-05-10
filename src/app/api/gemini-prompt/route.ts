@@ -10,7 +10,6 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const prompt = searchParams.get('prompt');
 
-    // string prompt
     const promptPrefix =
       'Can you generate a music playlist of 10 songs. ' +
       'I want to song name and artist name for each song in a string seperated by |. ' +
@@ -26,7 +25,7 @@ export async function GET(request: NextRequest) {
     const text = response.text();
     const arr = text.split('|');
 
-    return new Response(JSON.stringify({ songIds: arr }), {
+    return new Response(JSON.stringify({ songs: arr }), {
       status: 200,
       headers: { 'Content-Type': 'object/json' },
     });

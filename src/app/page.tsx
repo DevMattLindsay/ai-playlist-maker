@@ -1,19 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PromptInput, SpotifyLogin } from '@/components';
+import { PromptInput, Track } from '@/components';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   fetchSpotifyUser,
   fetchSpotifyCreatePlaylist,
   fetchSpotifyAddItemsToPlaylist,
   fetchSpotifyUserAccessToken,
+  fetchGeminiSongs,
+  fetchTracks,
 } from '@/services';
-import {
-  LOCAL_STORAGE_AUTH_CODE,
-  LOCAL_STORAGE_ACCESS_CODE,
-  LOCAL_STORAGE_ACCESS_CODE_EXPIRY,
-} from '@/utils';
+import { LOCAL_STORAGE_AUTH_CODE } from '@/utils';
 
 export default function Home() {
   const searchParams = useSearchParams();
@@ -21,8 +19,7 @@ export default function Home() {
   const router = useRouter();
 
   const [prompt, setPrompt] = useState('');
-  const [songIds, setSongIds] = useState<string[]>([]);
-  const [tracks, setTracks] = useState<SpotifyApi.TrackObjectFull[] | undefined>([]);
+  const [tracks, setTracks] = useState<SpotifyApi.TrackObjectFull[]>([]);
 
   useEffect(() => {
     const getAccessToken = async () => {
@@ -36,24 +33,17 @@ export default function Home() {
     }
   }, []);
 
-  const handleClick = async () => {
-    try {
-      const geminiResponse = await fetch(`/api/gemini-prompt?prompt=${prompt}`);
-      const geminiData = await geminiResponse.json();
-      console.log('geminiData : ', geminiData);
-      setSongIds(geminiData.songIds);
-      const spotifyResponse = await fetch(
-        `/api/spotify-songs?songs=${geminiData.songIds.join('|')}`
-      );
-      const spotifyData = await spotifyResponse.json();
-      console.log('spotifyData : ', spotifyData);
-      setTracks(spotifyData.tracks);
-    } catch (error) {
-      console.error('error : ', error);
-    }
+  const handlePrompt = async () => {
+    const geminiData = await fetchGeminiSongs(prompt);
+    if (!geminiData) return;
+
+    const trackData = await fetchTracks(geminiData.songs);
+    if (!trackData) return;
+
+    setTracks(trackData.tracks);
   };
 
-  const handleClickPlaylist = async () => {
+  const handleCreatePlaylist = async () => {
     if (!prompt || !tracks) return;
 
     const userData = await fetchSpotifyUser();
@@ -73,35 +63,21 @@ export default function Home() {
 
       <PromptInput prompt={prompt} onPromptChange={(prompt) => setPrompt(prompt)} />
 
-      <button className="bg-purple-700 p-2 rounded-sm" onClick={handleClick}>
+      <button className="bg-purple-700 p-2 rounded-sm" onClick={handlePrompt}>
         Prompt
       </button>
 
-      <SpotifyLogin />
-
-      <button className="bg-pink-700 p-2 rounded-sm" onClick={handleClickPlaylist}>
-        Create Playlist
-      </button>
-
-      <div className="flex flex-col gap-1">
-        {songIds.map((item, index) => (
-          <p key={index}>{item}</p>
-        ))}
-      </div>
-
-      <div>
-        {tracks &&
-          tracks.map((track, index) =>
-            track ? (
-              <div key={index} className="flex flex-col gap-1">
-                <p>{track.name}</p>
-                <p>{track.artists[0].name}</p>
-                <p>{track.album.release_date}</p>
-                <img src={track.album.images[0].url} alt={track.name} />
-              </div>
-            ) : null
-          )}
-      </div>
+      {tracks.length > 0 && (
+        <div className="flex flex-col gap-y-4 mt-8 max-w-screen-lg">
+          {tracks.map((track) => (track ? <Track key={track.id} track={track} /> : null))}
+          <button
+            className="block m-auto bg-pink-700 p-2 rounded-sm"
+            onClick={handleCreatePlaylist}
+          >
+            Create Playlist
+          </button>
+        </div>
+      )}
     </main>
   );
 }
