@@ -37,6 +37,8 @@ export default function Home() {
     const geminiData = await fetchGeminiSongs(prompt);
     if (!geminiData) return;
 
+    console.log('geminiData : ', geminiData);
+
     const trackData = await fetchTracks(geminiData.songs);
     if (!trackData) return;
 

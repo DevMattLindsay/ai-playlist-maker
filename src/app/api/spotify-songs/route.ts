@@ -1,5 +1,6 @@
 import { type NextRequest } from 'next/server';
 import { isAfter, parse, format } from 'date-fns';
+import { getUniqueArrayByKey } from '@/utils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
     const songsArr = songs.split('|');
 
     let searchPromises = [];
-    let tracks: any[] = [];
+    let tracks: (SpotifyApi.TrackObjectFull | SpotifyApi.RecommendationTrackObject)[] = [];
 
     for (let song of songsArr) {
       searchPromises.push(
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     await Promise.all(searchPromises)
       .then(async (responses) => {
-        const reponseData: any[] = [];
+        const reponseData: Promise<SpotifyApi.SearchResponse>[] = [];
 
         responses.forEach((response) => {
           reponseData.push(response.json());
@@ -52,13 +53,39 @@ export async function GET(request: NextRequest) {
         return Promise.all(reponseData);
       })
       .then((data) => {
-        tracks = data;
+        tracks = data.map((d) => (d.tracks ? d.tracks.items[0] : null)).filter((t) => t !== null);
+        tracks = getUniqueArrayByKey(tracks, 'id');
       })
       .catch((error) => {
         throw new Error('Error fetching tracks: ', error);
       });
 
-    return new Response(JSON.stringify({ tracks: tracks.map((t) => t.tracks.items[0]) }), {
+    // Get recommendations to fill in the rest of the playlist
+    const recommendationsNeeded = 20 - tracks.length;
+
+    if (recommendationsNeeded > 0) {
+      const seeds = tracks
+        .slice(0, 5)
+        .map((t) => t.id)
+        .join(',');
+      console.log('fetching recommendations : ', seeds);
+      const recommendationsResponse = await fetch(
+        `https://api.spotify.com/v1/recommendations?limit=${recommendationsNeeded}&seed_tracks=${seeds}`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${process.env.SPOTIFY_ACCESS_TOKEN}`,
+          },
+        }
+      );
+
+      const recommendationsData =
+        (await recommendationsResponse.json()) as SpotifyApi.RecommendationsObject;
+
+      tracks = [...tracks, ...recommendationsData.tracks];
+    }
+
+    return new Response(JSON.stringify({ tracks: tracks }), {
       status: 200,
       headers: { 'Content-Type': 'object/json' },
     });
